@@ -1,0 +1,10 @@
+name = "homework-submission-system"
+type = "static"
+
+[build]
+command = "npm run build"
+publish = "dist"
+
+[env]
+SUPABASE_URL = "your-supabase-url"
+SUPABASE_ANON_KEY = "your-supabase-anon-key"
