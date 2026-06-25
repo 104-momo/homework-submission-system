@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { useStore } from '../store';
 import { Assignment, Submission, Student } from '../types';
+import { supabase, hasSupabase } from '../supabase/client';
 
 export default function StudentHome() {
   const { userRole, setUserRole, currentStudent, setCurrentStudent, assignments, submissions, students } = useStore();
@@ -52,9 +53,27 @@ export default function StudentHome() {
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!selectedAssignment || !selectedFile || selectedMembers.length === 0) {
       return;
+    }
+
+    let attachmentUrl = '#';
+
+    if (hasSupabase && supabase.storage) {
+      const fileId = `${Date.now()}-${selectedFile.name}`;
+      const { data, error } = await supabase.storage
+        .from('homework-attachments')
+        .upload(fileId, selectedFile);
+
+      if (error) {
+        console.error('File upload failed:', error);
+      } else {
+        const { data: urlData } = supabase.storage
+          .from('homework-attachments')
+          .getPublicUrl(fileId);
+        attachmentUrl = urlData?.publicUrl || '#';
+      }
     }
 
     const newSubmission: Submission = {
@@ -62,7 +81,7 @@ export default function StudentHome() {
       assignmentId: selectedAssignment.id,
       studentNames: selectedMembers.map((m) => m.name),
       studentIds: selectedMembers.map((m) => m.id),
-      attachmentUrl: '#',
+      attachmentUrl,
       fileName: selectedFile.name,
       submittedAt: new Date().toISOString(),
       status: 'pending',

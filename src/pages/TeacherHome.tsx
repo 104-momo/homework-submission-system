@@ -513,6 +513,45 @@ export default function TeacherHome() {
                         </div>
                       </div>
 
+                      {selectedSubmission.attachmentUrl && selectedSubmission.attachmentUrl !== '#' && (
+                        <div className="border border-gray-200 rounded-xl p-4">
+                          <h3 className="font-medium text-gray-800 mb-3">文件预览</h3>
+                          {selectedSubmission.fileName.endsWith('.mp4') || 
+                           selectedSubmission.fileName.endsWith('.webm') ||
+                           selectedSubmission.fileName.endsWith('.ogg') ? (
+                            <video
+                              src={selectedSubmission.attachmentUrl}
+                              controls
+                              className="w-full rounded-lg"
+                              style={{ maxHeight: '400px' }}
+                            />
+                          ) : selectedSubmission.fileName.endsWith('.png') || 
+                             selectedSubmission.fileName.endsWith('.jpg') ||
+                             selectedSubmission.fileName.endsWith('.jpeg') ||
+                             selectedSubmission.fileName.endsWith('.gif') ? (
+                            <img
+                              src={selectedSubmission.attachmentUrl}
+                              alt={selectedSubmission.fileName}
+                              className="w-full rounded-lg"
+                              style={{ maxHeight: '400px', objectFit: 'contain' }}
+                            />
+                          ) : (
+                            <div className="flex flex-col items-center justify-center py-8 text-gray-500">
+                              <FileText className="w-12 h-12 mb-2 text-gray-300" />
+                              <p>不支持预览此文件格式</p>
+                              <a
+                                href={selectedSubmission.attachmentUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="mt-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                              >
+                                下载文件
+                              </a>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
                       {selectedSubmission.status === 'graded' && (
                         <div className="border border-gray-200 rounded-xl p-4">
                           <h3 className="font-medium text-gray-800 mb-2">批改记录</h3>
