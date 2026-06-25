@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { AppState, Assignment, Submission, UserRole, Student } from '../types';
-import { supabase } from '../supabase/client';
+import { supabase, hasSupabase } from '../supabase/client';
 
 const initialAssignments: Assignment[] = [
   {
@@ -86,12 +86,7 @@ const initialSubmissions: Submission[] = [
   },
 ];
 
-const useSupabase = () => {
-  const hasSupabase = import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY;
-  return { hasSupabase, supabase };
-};
-
-const { hasSupabase, supabase: sb } = useSupabase();
+const sb = supabase;
 
 export const useStore = create<AppState>((set, get) => ({
   userRole: null,
