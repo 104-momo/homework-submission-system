@@ -1,7 +1,2 @@
 name = "homework-submission-system"
-type = "static"
 pages_build_output_dir = "dist"
-
-[env]
-SUPABASE_URL = "your-supabase-url"
-SUPABASE_ANON_KEY = "your-supabase-anon-key"
