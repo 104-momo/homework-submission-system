@@ -12,10 +12,13 @@ import {
   ArrowLeft,
   Users,
   User,
+  AlertCircle,
 } from 'lucide-react';
 import { useStore } from '../store';
 import { Assignment, Submission, Student } from '../types';
 import { supabase, hasSupabase } from '../supabase/client';
+import { hasStorj, uploadToStorj } from '../storj/client';
+import { hasCos, uploadToCos } from '../cos/client';
 
 export default function StudentHome() {
   const { userRole, setUserRole, currentStudent, setCurrentStudent, assignments, submissions, students } = useStore();
@@ -24,6 +27,8 @@ export default function StudentHome() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [showSubmitSuccess, setShowSubmitSuccess] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState('');
 
   const handleLogout = () => {
     setUserRole(null);
@@ -58,41 +63,65 @@ export default function StudentHome() {
       return;
     }
 
+    setUploading(true);
+    setUploadError('');
     let attachmentUrl = '#';
 
-    if (hasSupabase && supabase.storage) {
-      const fileId = `${Date.now()}-${selectedFile.name}`;
-      const { data, error } = await supabase.storage
-        .from('homework-attachments')
-        .upload(fileId, selectedFile);
-
-      if (error) {
-        console.error('File upload failed:', error);
-      } else {
-        const { data: urlData } = supabase.storage
+    try {
+      if (hasCos) {
+        const fileId = `${Date.now()}-${selectedFile.name}`;
+        const path = `homework/${selectedAssignment.id}/${fileId}`;
+        attachmentUrl = await uploadToCos(selectedFile, path);
+      } else if (hasStorj) {
+        const fileId = `${Date.now()}-${selectedFile.name}`;
+        const path = `homework/${selectedAssignment.id}/${fileId}`;
+        attachmentUrl = await uploadToStorj(selectedFile, path);
+      } else if (hasSupabase && supabase.storage) {
+        const fileId = `${Date.now()}-${selectedFile.name}`;
+        const { data, error } = await supabase.storage
           .from('homework-attachments')
-          .getPublicUrl(fileId);
-        attachmentUrl = urlData?.publicUrl || '#';
+          .upload(fileId, selectedFile);
+
+        if (error) {
+          console.error('File upload failed:', error);
+          setUploadError(`Supabase上传失败: ${error.message}`);
+          setUploading(false);
+          return;
+        } else {
+          const { data: urlData } = supabase.storage
+            .from('homework-attachments')
+            .getPublicUrl(fileId);
+          attachmentUrl = urlData?.publicUrl || '#';
+        }
+      } else {
+        setUploadError('未配置存储服务，请联系管理员');
+        setUploading(false);
+        return;
       }
+
+      const newSubmission: Submission = {
+        id: `s${Date.now()}`,
+        assignmentId: selectedAssignment.id,
+        studentNames: selectedMembers.map((m) => m.name),
+        studentIds: selectedMembers.map((m) => m.id),
+        attachmentUrl,
+        fileName: selectedFile.name,
+        submittedAt: new Date().toISOString(),
+        status: 'pending',
+      };
+
+      useStore.getState().addSubmission(newSubmission);
+      setSelectedAssignment(null);
+      setSelectedMembers([]);
+      setSelectedFile(null);
+      setShowSubmitSuccess(true);
+      setTimeout(() => setShowSubmitSuccess(false), 3000);
+    } catch (error) {
+      console.error('Upload failed:', error);
+      setUploadError(`上传失败: ${error instanceof Error ? error.message : '未知错误'}`);
+    } finally {
+      setUploading(false);
     }
-
-    const newSubmission: Submission = {
-      id: `s${Date.now()}`,
-      assignmentId: selectedAssignment.id,
-      studentNames: selectedMembers.map((m) => m.name),
-      studentIds: selectedMembers.map((m) => m.id),
-      attachmentUrl,
-      fileName: selectedFile.name,
-      submittedAt: new Date().toISOString(),
-      status: 'pending',
-    };
-
-    useStore.getState().addSubmission(newSubmission);
-    setSelectedAssignment(null);
-    setSelectedMembers([]);
-    setSelectedFile(null);
-    setShowSubmitSuccess(true);
-    setTimeout(() => setShowSubmitSuccess(false), 3000);
   };
 
   const getSubmissionStatus = (assignmentId: string) => {
@@ -275,16 +304,32 @@ export default function StudentHome() {
 
                 <button
                   onClick={handleSubmit}
-                  disabled={!selectedFile || selectedMembers.length === 0}
+                  disabled={!selectedFile || selectedMembers.length === 0 || uploading}
                   className={`w-full py-3 px-4 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all ${
-                    selectedFile && selectedMembers.length > 0
+                    selectedFile && selectedMembers.length > 0 && !uploading
                       ? 'bg-blue-500 hover:bg-blue-600 text-white shadow-lg'
                       : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                   }`}
                 >
-                  <Send className="w-5 h-5" />
-                  <span>提交作业</span>
+                  {uploading ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <span>上传中...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-5 h-5" />
+                      <span>提交作业</span>
+                    </>
+                  )}
                 </button>
+
+                {uploadError && (
+                  <div className="flex items-center gap-2 text-red-500 bg-red-50 px-4 py-3 rounded-lg mt-3">
+                    <AlertCircle className="w-5 h-5" />
+                    <span>{uploadError}</span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
