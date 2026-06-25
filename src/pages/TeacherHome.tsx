@@ -155,6 +155,18 @@ export default function TeacherHome() {
     setSelectedStudentIds([]);
   };
 
+  const downloadTemplate = () => {
+    const template = `姓名,学号,班级
+张三,2024001,计算机科学1班
+李四,2024002,计算机科学1班
+王五,2024003,计算机科学2班`;
+    const blob = new Blob(['\uFEFF' + template], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = '学生名单导入模板.csv';
+    link.click();
+  };
+
   const handleFileImport = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -877,6 +889,13 @@ export default function TeacherHome() {
                 >
                   <Upload className="w-4 h-4" />
                   <span>批量导入</span>
+                </button>
+                <button
+                  onClick={downloadTemplate}
+                  className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors flex items-center gap-2"
+                >
+                  <Download className="w-4 h-4" />
+                  <span>下载模板</span>
                 </button>
                 <span className="text-sm text-gray-400">
                   支持 CSV/TXT 格式：姓名,学号,班级

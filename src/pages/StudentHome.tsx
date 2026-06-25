@@ -247,7 +247,7 @@ export default function StudentHome() {
                       ) : (
                         <>
                           <span className="text-gray-600">点击或拖拽文件到此处上传</span>
-                          <span className="text-sm text-gray-400">支持 PDF、Word、图片等格式</span>
+                          <span className="text-sm text-gray-400">支持 PDF、Word、图片、MP4 视频等格式</span>
                         </>
                       )}
                     </label>
