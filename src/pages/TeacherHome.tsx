@@ -33,6 +33,8 @@ export default function TeacherHome() {
     assignments,
     submissions,
     setSubmissions,
+    addSubmission,
+    updateSubmission,
     deleteSubmission,
     addAssignment,
     deleteAssignment,
@@ -74,19 +76,13 @@ export default function TeacherHome() {
       return;
     }
 
-    const updatedSubmissions = submissions.map((s) =>
-      s.id === selectedSubmission.id
-        ? {
-            ...s,
-            score: score,
-            comment: comment,
-            status: 'graded' as const,
-            gradedAt: new Date().toISOString(),
-          }
-        : s
-    );
+    updateSubmission(selectedSubmission.id, {
+      score: score,
+      comment: comment,
+      status: 'graded' as const,
+      gradedAt: new Date().toISOString(),
+    });
 
-    setSubmissions(updatedSubmissions);
     setSelectedSubmission(null);
     setScore('');
     setComment('');

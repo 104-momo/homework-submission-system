@@ -87,7 +87,7 @@ export default function StudentHome() {
       status: 'pending',
     };
 
-    useStore.getState().setSubmissions([...submissions, newSubmission]);
+    useStore.getState().addSubmission(newSubmission);
     setSelectedAssignment(null);
     setSelectedMembers([]);
     setSelectedFile(null);

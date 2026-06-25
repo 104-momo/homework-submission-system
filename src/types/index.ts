@@ -40,6 +40,8 @@ export interface AppState {
   deleteAssignment: (assignmentId: string) => void;
   submissions: Submission[];
   setSubmissions: (submissions: Submission[]) => void;
+  addSubmission: (submission: Submission) => void;
+  updateSubmission: (submissionId: string, updates: Partial<Submission>) => void;
   deleteSubmission: (submissionId: string) => void;
   students: Student[];
   setStudents: (students: Student[]) => void;

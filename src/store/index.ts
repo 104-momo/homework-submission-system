@@ -37,54 +37,7 @@ const initialStudents: Student[] = [
   { id: 'stu8', name: '吴十', studentNumber: '2024008', className: '计算机科学3班' },
 ];
 
-const initialSubmissions: Submission[] = [
-  {
-    id: 's1',
-    assignmentId: '1',
-    studentNames: ['张三', '李四', '王五'],
-    studentIds: ['stu1', 'stu2', 'stu3'],
-    attachmentUrl: '#',
-    fileName: '小组项目报告.pdf',
-    submittedAt: '2026-06-14T15:30:00',
-    status: 'graded',
-    score: 92,
-    comment: '报告结构清晰，内容详实，团队协作良好。建议在技术实现部分增加更多细节。',
-    gradedAt: '2026-06-15T10:00:00',
-  },
-  {
-    id: 's2',
-    assignmentId: '1',
-    studentNames: ['赵六', '钱七'],
-    studentIds: ['stu4', 'stu5'],
-    attachmentUrl: '#',
-    fileName: '项目报告_第二组.pdf',
-    submittedAt: '2026-06-14T18:45:00',
-    status: 'graded',
-    score: 85,
-    comment: '完成度较好，但创新性不足。',
-    gradedAt: '2026-06-15T11:30:00',
-  },
-  {
-    id: 's3',
-    assignmentId: '2',
-    studentNames: ['张三'],
-    studentIds: ['stu1'],
-    attachmentUrl: '#',
-    fileName: '实验报告_张三.pdf',
-    submittedAt: '2026-06-09T22:15:00',
-    status: 'pending',
-  },
-  {
-    id: 's4',
-    assignmentId: '2',
-    studentNames: ['李四', '王五'],
-    studentIds: ['stu2', 'stu3'],
-    attachmentUrl: '#',
-    fileName: '实验报告_李四_王五.pdf',
-    submittedAt: '2026-06-09T23:00:00',
-    status: 'pending',
-  },
-];
+const initialSubmissions: Submission[] = [];
 
 const sb = supabase;
 
@@ -126,6 +79,51 @@ export const useStore = create<AppState>((set, get) => ({
   
   submissions: initialSubmissions,
   setSubmissions: (submissions: Submission[]) => set({ submissions }),
+  
+  addSubmission: async (submission: Submission) => {
+    if (hasSupabase) {
+      const { error } = await sb.from('submissions').insert({
+        id: submission.id,
+        assignment_id: submission.assignmentId,
+        student_names: submission.studentNames,
+        student_ids: submission.studentIds,
+        attachment_url: submission.attachmentUrl,
+        file_name: submission.fileName,
+        submitted_at: submission.submittedAt,
+        status: submission.status,
+      });
+      if (!error) {
+        set((state) => ({ submissions: [...state.submissions, submission] }));
+      }
+    } else {
+      set((state) => ({ submissions: [...state.submissions, submission] }));
+    }
+  },
+  
+  updateSubmission: async (submissionId: string, updates: Partial<Submission>) => {
+    if (hasSupabase) {
+      const dbUpdates: Record<string, any> = {};
+      if (updates.score !== undefined) dbUpdates.score = updates.score;
+      if (updates.comment !== undefined) dbUpdates.comment = updates.comment;
+      if (updates.status !== undefined) dbUpdates.status = updates.status;
+      if (updates.gradedAt !== undefined) dbUpdates.graded_at = updates.gradedAt;
+      
+      const { error } = await sb.from('submissions').update(dbUpdates).eq('id', submissionId);
+      if (!error) {
+        set((state) => ({
+          submissions: state.submissions.map((s) =>
+            s.id === submissionId ? { ...s, ...updates } : s
+          ),
+        }));
+      }
+    } else {
+      set((state) => ({
+        submissions: state.submissions.map((s) =>
+          s.id === submissionId ? { ...s, ...updates } : s
+        ),
+      }));
+    }
+  },
   
   deleteSubmission: async (submissionId: string) => {
     if (hasSupabase) {
